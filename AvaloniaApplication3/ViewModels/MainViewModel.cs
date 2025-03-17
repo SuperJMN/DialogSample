@@ -4,11 +4,10 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using ReactiveUI;
-using ReactiveUI.SourceGenerators;
 using ReactiveUI.Validation.Extensions;
 using Zafiro.Avalonia.Dialogs;
 using Zafiro.CSharpFunctionalExtensions;
-using Zafiro.Reactive;
+using Zafiro.UI;
 
 namespace AvaloniaApplication3.ViewModels;
 
@@ -16,26 +15,59 @@ public partial class MainViewModel : ReactiveObject
 {
     private readonly IDialog dialogService;
 
-    [ObservableAsProperty]
-    private ImConnectedViewModel? imConnectedViewModel;
-
-    public MainViewModel(IDialog dialogService)
+    public MainViewModel(IDialog dialogService, INotificationService notificationService)
     {
         this.dialogService = dialogService;
 
-        Connect = ReactiveCommand.CreateFromTask(ShowConnectionDialog, this.WhenAnyValue(x => x.ImConnectedViewModel).Null());
-        imConnectedViewModelHelper = Connect.Values().ToProperty(this, x => x.ImConnectedViewModel);
-        CanConnect = Connect.CanExecute;
+        Sync = StoppableCommand.Create(() =>
+        {
+            return Observable
+                .FromAsync(() => RequestSettings())
+                .Values()
+                .SelectMany(GetMetrics);
+        }, Maybe<IObservable<bool>>.None);
+
+        Sync.StartReactive.HandleErrorsWith(notificationService);
+        CurrentMetrics = Sync.StartReactive.Successes();
     }
 
-    public IObservable<bool> CanConnect { get; }
+    private static IObservable<Result<Metrics>> GetMetrics(ConnectionSettings connectionSettings)
+    {
+        var service = new MetricsService(connectionSettings);
+        
+        return Observable.Timer(TimeSpan.FromSeconds(5))
+            .SelectMany(_ => Observable.FromAsync(() => service.GetMetrics()))
+            .Repeat();
+    }
 
-    public ReactiveCommand<Unit, Maybe<ImConnectedViewModel>> Connect { get; }
+    public IObservable<Metrics> CurrentMetrics { get; }
 
-    private Task<Maybe<ImConnectedViewModel>> ShowConnectionDialog()
+    public StoppableCommand<Unit, Result<Metrics>> Sync { get; }
+    
+    private Task<Maybe<ConnectionSettings>> RequestSettings()
     {
         return dialogService
-            .ShowAndGetResult(new ConnectionDialogViewModel(), "Provide settings first, bitch", vm => vm.IsValid(), x => new ConnectionSettings(x.Host, x.Port!.Value))
-            .Map(settings => new ImConnectedViewModel(settings));
+            .ShowAndGetResult(
+                viewModel: new ConnectionDialogViewModel(), 
+                title: "Connection Settings", 
+                canSubmit: vm => vm.IsValid(), 
+                getResult: x => new ConnectionSettings(x.Host, x.Port!.Value));
     }
 }
+
+internal class MetricsService
+{
+    public ConnectionSettings Settings { get; }
+
+    public MetricsService(ConnectionSettings settings)
+    {
+        Settings = settings;
+    }
+
+    public async Task<Result<Metrics>> GetMetrics()
+    {
+        return new Metrics(new Random().Next());
+    }
+}
+
+public record Metrics(int Random);

@@ -3,18 +3,21 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:AvaloniaApplication3.ViewModels"
+             xmlns:controls="clr-namespace:Zafiro.Avalonia.Controls;assembly=Zafiro.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AvaloniaApplication3.Views.MainView"
              x:DataType="vm:MainViewModel">
     <Interaction.Behaviors>
         <DataContextChangedTrigger>
-            <InvokeCommandAction Command="{Binding Connect}" />
+            <InvokeCommandAction Command="{Binding Sync.Start}" />
         </DataContextChangedTrigger>
     </Interaction.Behaviors>
 
-    <Panel>
-        <ContentControl Content="{Binding ImConnectedViewModel}" />
-        <Button Command="{Binding Connect}" VerticalAlignment="Center" HorizontalAlignment="Center" Content="CONNECT THE SHIT" IsVisible="{Binding CanConnect^}" />
-    </Panel>
+    <DockPanel>
+        <controls:StoppableControl Command="{Binding Sync}" VerticalAlignment="Center" HorizontalAlignment="Center" Content="CONNECT THE SHIT" StopContent="Disconnect" />
+        <StackPanel>
+            <TextBlock Text="{Binding CurrentMetrics^.Random}" />
+        </StackPanel>
+    </DockPanel>
 
 </UserControl>
