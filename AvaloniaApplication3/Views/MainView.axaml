@@ -6,7 +6,7 @@
              xmlns:controls="clr-namespace:Zafiro.Avalonia.Controls;assembly=Zafiro.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AvaloniaApplication3.Views.MainView"
-             x:DataType="vm:MainViewModel">
+             x:DataType="vm:MainViewModel" Margin="10">
     <Interaction.Behaviors>
         <DataContextChangedTrigger>
             <InvokeCommandAction Command="{Binding Sync.Start}" />
@@ -14,10 +14,20 @@
     </Interaction.Behaviors>
 
     <DockPanel>
-        <controls:StoppableControl Command="{Binding Sync}" VerticalAlignment="Center" HorizontalAlignment="Center" Content="CONNECT THE SHIT" StopContent="Disconnect" />
-        <StackPanel>
-            <TextBlock Text="{Binding CurrentMetrics^.Random}" />
-        </StackPanel>
+        <controls:StoppableControl DockPanel.Dock="Top" Command="{Binding Sync}" VerticalAlignment="Center" Content="CONNECT THE SHIT" StopContent="Disconnect" />
+        <HeaderedContentControl Margin="0  20  0 0" Header="METRICS" IsEnabled="{Binding Sync.IsExecuting^}">
+            <HeaderedContentControl.Styles>
+                <Style Selector="TextBlock:disabled">
+                    <Setter Property="Opacity" Value="0.6" />
+                </Style>
+                <Style Selector="Label:disabled">
+                    <Setter Property="Opacity" Value="0.6" />
+                </Style>
+            </HeaderedContentControl.Styles>
+            <StackPanel>
+                <HeaderedContentControl Theme="{StaticResource Inline}" Header="Random metric" Content="{Binding CurrentMetrics^.Random}" />
+            </StackPanel>
+        </HeaderedContentControl>
     </DockPanel>
 
 </UserControl>

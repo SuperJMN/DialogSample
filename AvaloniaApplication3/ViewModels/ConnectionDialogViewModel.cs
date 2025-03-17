@@ -7,7 +7,7 @@ namespace AvaloniaApplication3.ViewModels;
 
 public partial class ConnectionDialogViewModel : ReactiveValidationObject
 {
-    [Reactive] private string host = "";
+    [Reactive] private string host = "Host";
     [Reactive] private int? port = 1000;
 
     public ConnectionDialogViewModel()

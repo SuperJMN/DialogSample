@@ -22,7 +22,7 @@ public partial class MainViewModel : ReactiveObject
         Sync = StoppableCommand.Create(() =>
         {
             return Observable
-                .FromAsync(() => RequestSettings())
+                .FromAsync(RequestSettings)
                 .Values()
                 .SelectMany(GetMetrics);
         }, Maybe<IObservable<bool>>.None);
@@ -34,8 +34,9 @@ public partial class MainViewModel : ReactiveObject
     private static IObservable<Result<Metrics>> GetMetrics(ConnectionSettings connectionSettings)
     {
         var service = new MetricsService(connectionSettings);
-        
-        return Observable.Timer(TimeSpan.FromSeconds(5))
+
+        return Observable
+            .Timer(TimeSpan.Zero, TimeSpan.FromSeconds(5))
             .SelectMany(_ => Observable.FromAsync(() => service.GetMetrics()))
             .Repeat();
     }
